@@ -43,13 +43,18 @@ function setup() {
   //call mappa object to create a tilemap at lat,long, zoom level
   myMap = mappa.tileMap(options);
   myMap.overlay(canvas); //create map overlay of a canvas
-  // Associate redrawMap callback function with an "onChange" event of the map
-  myMap.onChange(redrawMap);
+  // Associate redrawStations callback function with an "onChange" event of the map
+  myMap.onChange(redrawStations);
 }
 
 function draw() {
   if (currentStation){
+    let c = startStations[currentStation].coordinate;
+    let pnt = myMap.latLngToPixel(c.lat,c.lng);
+    fill(50,50,190,100);
+    noStroke();
     drawRoutesFrom(currentStation);
+    ellipse(pnt.x,pnt.y,10,10);
   }
 }
 
@@ -59,7 +64,7 @@ function mouseClicked(){
     let d = distSquared(mouseX,mouseY,st.pnt.x,st.pnt.y)
     if (d < 20){
       clear();
-      redrawMap();
+      redrawStations();
       startTime = millis();
       currentStation = id;
 
@@ -69,8 +74,8 @@ function mouseClicked(){
 }
 
 function drawRoutesFrom(start){
-  strokeWeight(2);
-  stroke(0);
+  strokeWeight(0.8);
+  stroke(100,50,50,80);
 
   for (let end in startStations[start].endStations){
     if (data.routes[start][end]){
@@ -81,8 +86,8 @@ function drawRoutesFrom(start){
 
       // console.log(distanceLeft);
 
-      let sw = startStations[start].endStations[end];
-      strokeWeight(constrain(sw/5,0.5,5));
+      // let sw = startStations[start].endStations[end];
+      // strokeWeight(constrain(sw/5,0.5,3));
 
       for (let i = 1; i < route.length; i++){
         // is this worth avoiding the extra calculations below...
@@ -138,13 +143,14 @@ function distSquared(x1,y1,x2,y2){
 }
 
 //function to redraw points
-function redrawMap() {
+function redrawStations() {
   clear();
   for (let name in startStations) {
     let c = startStations[name].coordinate;
     let pnt = myMap.latLngToPixel(c.lat,c.lng);
     startStations[name].pnt = pnt;
-    fill(0,0,255);
+    fill(40,10,150,80);
+    noStroke();
     ellipse(pnt.x,pnt.y,5,5);
   }
 }
