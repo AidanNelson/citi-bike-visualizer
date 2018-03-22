@@ -2,6 +2,7 @@ let data = {};
 let startStations = {};
 
 let currentStation = null;
+let viewStations = [];
 
 //create variables to hold the map, canvas, and "Mappa" instance
 let myMap;
@@ -11,7 +12,7 @@ let mappa;
 // options for mappa object
 let options = {
   //set starting coordinates to NYC
-  lat: 40.7128,
+  lat: 40.7,
   lng: -73.96,
   //set zoom level
   zoom: 13,
@@ -19,7 +20,14 @@ let options = {
 }
 
 let startTime;
-let speed = 0.8;
+let speed = 1.5;
+
+// style stuff
+let stationCol;
+let routeCol;
+let stSm = 5;
+let stationHover = 55;
+let stLg = 5;
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -45,37 +53,63 @@ function setup() {
   myMap.overlay(canvas); //create map overlay of a canvas
   // Associate redrawStations callback function with an "onChange" event of the map
   myMap.onChange(redrawStations);
+
+  stationCol = color(40,10,150,80);
+  routeCol = color(40,10,150,90);
+  startTime = millis();
 }
 
 function draw() {
-  if (currentStation){
-    let c = startStations[currentStation].coordinate;
+  clear();
+
+
+  checkMouse();
+
+  // if (currentStation){
+  for (let i = 0; i < viewStations.length; i++) {
+    let name = viewStations[i]
+    let c = startStations[name].coordinate;
     let pnt = myMap.latLngToPixel(c.lat,c.lng);
-    fill(50,50,190,100);
+    fill(stationCol);
     noStroke();
-    drawRoutesFrom(currentStation);
-    ellipse(pnt.x,pnt.y,10,10);
+    drawRoutesFrom(name);
   }
+
+  redrawStations();
 }
 
-function mouseClicked(){
-  for (let id in startStations) {
-    let st = startStations[id];
-    let d = distSquared(mouseX,mouseY,st.pnt.x,st.pnt.y)
-    if (d < 20){
-      clear();
-      redrawStations();
-      startTime = millis();
-      currentStation = id;
+function checkMouse(){
 
+  for (let name in startStations) {
+    let station = startStations[name];
+    if (station.pnt){
+      let d = distSquared(mouseX,mouseY,station.pnt.x,station.pnt.y)
+      if (d < stationHover){
+        ellipse(station.pnt.x,station.pnt.y,stationHover/2,stationHover/2);
 
+        // hacky way to avoid having to have separate mousePressed function
+        // and avoid accidental double clicking
+        let dt = millis() - startTime;
+        if (mouseIsPressed && (dt > 200)) {
+          startTime = millis();
+
+          let index = viewStations.indexOf(name);
+
+          if (index == -1) {
+            viewStations.push(name);
+          } else {
+            viewStations.splice(index,1);
+          }
+        }
+      }
     }
   }
 }
 
+
 function drawRoutesFrom(start){
-  strokeWeight(0.8);
-  stroke(100,50,50,80);
+  strokeWeight(2);
+  stroke(routeCol);
 
   for (let end in startStations[start].endStations){
     if (data.routes[start][end]){
@@ -84,14 +118,11 @@ function drawRoutesFrom(start){
       let dt = millis() - startTime;
       let distanceLeft = (dt * speed);
 
-      // console.log(distanceLeft);
 
       // let sw = startStations[start].endStations[end];
       // strokeWeight(constrain(sw/5,0.5,3));
 
       for (let i = 1; i < route.length; i++){
-        // is this worth avoiding the extra calculations below...
-        // console.log(distanceLeft);
 
         let p1 = myMap.latLngToPixel(route[i-1][1],route[i-1][0]);
         let p2 = myMap.latLngToPixel(route[i][1],route[i][0]);
@@ -144,13 +175,46 @@ function distSquared(x1,y1,x2,y2){
 
 //function to redraw points
 function redrawStations() {
-  clear();
   for (let name in startStations) {
+
     let c = startStations[name].coordinate;
     let pnt = myMap.latLngToPixel(c.lat,c.lng);
+
     startStations[name].pnt = pnt;
-    fill(40,10,150,80);
+
+    fill(stationCol);
     noStroke();
-    ellipse(pnt.x,pnt.y,5,5);
+
+    if (viewStations.includes(name)) {
+      ellipse(pnt.x,pnt.y,stLg,stLg);
+    } else {
+      ellipse(pnt.x,pnt.y,stSm,stSm);
+    }
+
   }
+
+}
+
+
+function showRandomRoutes(){
+  clear();
+  redrawStations();
+  startTime = millis();
+  let rlist = [];
+  for (let id in startStations){
+    rlist.push(id);
+  }
+  viewStations = [rlist[floor(random(rlist.length))]];
+}
+
+function showAllRoutes(){
+  clear();
+  redrawStations();
+  startTime = millis();
+  let stationNames = [];
+  for (let name in startStations){
+    stationNames.push(name);
+  }
+
+  viewStations = stationNames;
 }
