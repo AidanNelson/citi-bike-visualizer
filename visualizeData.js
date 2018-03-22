@@ -1,7 +1,6 @@
 let data = {};
 let startStations = {};
 
-let currentStation = null;
 let viewStations = [];
 
 //create variables to hold the map, canvas, and "Mappa" instance
@@ -55,7 +54,7 @@ function setup() {
   myMap.onChange(redrawStations);
 
   stationCol = color(40,10,150,80);
-  routeCol = color(40,10,150,90);
+  routeCol = color(40,10,150,100);
   startTime = millis();
 }
 
